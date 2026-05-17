@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}My Profile – SkillBarter{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="container">
+
+        <!-- ── Profile Header ── -->
+        <div class="profile-header-card">
+            <div class="profile-avatar-lg" style="background: {{ user.avatar_color }}">
+                {{ user.full_name[0].upper() }}
+            </div>
+            <div class="profile-header-info">
+                <h1>{{ user.full_name }}</h1>
+                <p class="profile-username">@{{ user.username }}</p>
+                <p class="profile-bio-text">{{ user.bio or 'No bio yet — add one below!' }}</p>
+                <p class="profile-joined">Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'Recently' }}</p>
+            </div>
+            <button class="btn btn-outline" onclick="toggleEditBio()">✏️ Edit Bio</button>
+        </div>
+
+        <!-- Bio edit form (hidden by default) -->
+        <div class="edit-bio-card" id="editBioCard" style="display:none">
+            <form method="POST" action="{{ url_for('main.update_profile') }}">
+                <label>Update your bio</label>
+                <textarea name="bio" rows="3" placeholder="Tell others what you're studying, interested in…">{{ user.bio or '' }}</textarea>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-outline" onclick="toggleEditBio()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Main grid: Skills + Progress ── -->
+        <div class="profile-grid">
+
+            <!-- Offered Skills -->
+            <div class="profile-card">
+                <div class="card-title">
+                    <span>✅ Skills I Offer</span>
+                    <span class="badge-count">{{ skills.offered|length }}</span>
+                </div>
+                <div class="skill-list">
+                    {% for s in skills.offered %}
+                    <div class="skill-item">
+                        <span class="skill-tag skill-offered">{{ s.skill_name }}</span>
+                        <form method="POST" action="{{ url_for('main.delete_skill_route', skill_id=s.id) }}" style="display:inline">
+                            <button type="submit" class="skill-delete" title="Remove">×</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <p class="empty-hint">No offered skills yet.</p>
+                    {% endfor %}
+                </div>
+                <!-- Add offered skill -->
+                <form method="POST" action="{{ url_for('main.add_skill_route') }}" class="add-skill-form">
+                    <input type="hidden" name="skill_type" value="offered">
+                    <input type="text" name="skill_name" placeholder="Add a skill you can teach…" required>
+                    <button type="submit">+ Add</button>
+                </form>
+            </div>
+
+            <!-- Needed Skills -->
+            <div class="profile-card">
+                <div class="card-title">
+                    <span>🎯 Skills I Need</span>
+                    <span class="badge-count">{{ skills.needed|length }}</span>
+                </div>
+                <div class="skill-list">
+                    {% for s in skills.needed %}
+                    <div class="skill-item">
+                        <span class="skill-tag skill-needed">{{ s.skill_name }}</span>
+                        <form method="POST" action="{{ url_for('main.delete_skill_route', skill_id=s.id) }}" style="display:inline">
+                            <button type="submit" class="skill-delete" title="Remove">×</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <p class="empty-hint">No needed skills yet.</p>
+                    {% endfor %}
+                </div>
+                <form method="POST" action="{{ url_for('main.add_skill_route') }}" class="add-skill-form">
+                    <input type="hidden" name="skill_type" value="needed">
+                    <input type="text" name="skill_name" placeholder="Add a skill you want to learn…" required>
+                    <button type="submit">+ Add</button>
+                </form>
+            </div>
+
+            <!-- Currently Learning -->
+            <div class="profile-card profile-card-wide">
+                <div class="card-title">
+                    <span>📖 Currently Learning</span>
+                    <span class="badge-count">{{ learning|length }}</span>
+                </div>
+                {% if learning %}
+                <div class="progress-list">
+                    {% for lp in learning %}
+                    <div class="progress-item" id="lp-{{ lp.id }}">
+                        <div class="progress-info">
+                            <span class="progress-skill">{{ lp.skill_name }}</span>
+                            <span class="progress-teacher">from
+                                <a href="{{ url_for('main.view_user', username=lp.teacher_name) }}">@{{ lp.teacher_name }}</a>
+                            </span>
+                            <button class="btn-tiny" onclick="toggleProgressEdit('lp-edit-{{ lp.id }}')">✏️ Update</button>
+                        </div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="fill-{{ lp.id }}" style="width: {{ lp.progress_pct }}%"></div>
+                            </div>
+                            <span class="progress-pct" id="pct-{{ lp.id }}">{{ lp.progress_pct }}%</span>
+                        </div>
+                        {% if lp.notes %}
+                            <p class="progress-notes">{{ lp.notes }}</p>
+                        {% endif %}
+                        <!-- Inline edit form (hidden) -->
+                        <div id="lp-edit-{{ lp.id }}" class="progress-edit-form" style="display:none">
+                            <input type="range" min="0" max="100" value="{{ lp.progress_pct }}"
+                                   oninput="document.getElementById('range-val-{{ lp.id }}').textContent=this.value+'%'"
+                                   id="range-{{ lp.id }}">
+                            <span id="range-val-{{ lp.id }}">{{ lp.progress_pct }}%</span>
+                            <input type="text" placeholder="Notes (optional)" id="notes-{{ lp.id }}"
+                                   value="{{ lp.notes or '' }}">
+                            <button class="btn-tiny btn-save"
+                                onclick="saveProgress({{ lp.teacher_id }}, '{{ lp.skill_name }}', 'range-{{ lp.id }}', 'notes-{{ lp.id }}', 'fill-{{ lp.id }}', 'pct-{{ lp.id }}', 'lp-edit-{{ lp.id }}')">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-hint">
+                    <p>Not tracking any learning yet.</p>
+                    <p>Chat with a match and start a skill exchange!</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Currently Teaching -->
+            <div class="profile-card profile-card-wide">
+                <div class="card-title">
+                    <span>🏫 Currently Teaching</span>
+                    <span class="badge-count">{{ teaching|length }}</span>
+                </div>
+                {% if teaching %}
+                <div class="progress-list">
+                    {% for tp in teaching %}
+                    <div class="progress-item">
+                        <div class="progress-info">
+                            <span class="progress-skill">{{ tp.skill_name }}</span>
+                            <span class="progress-teacher">to
+                                <a href="{{ url_for('main.view_user', username=tp.learner_name) }}">@{{ tp.learner_name }}</a>
+                            </span>
+                        </div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-fill-teach" style="width: {{ tp.progress_pct }}%"></div>
+                            </div>
+                            <span class="progress-pct">{{ tp.progress_pct }}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-hint">
+                    <p>Not teaching anyone yet. Offer your skills!</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div><!-- end profile-grid -->
+
+        <!-- Quick links -->
+        <div class="profile-quick-links">
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline">🔍 Find Matches</a>
+            <a href="{{ url_for('chat.chat_list') }}" class="btn btn-primary">💬 Messages</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.btn-tiny {
+    background: none;
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    font-size: .72rem;
+    padding: .2rem .55rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+}
+.btn-tiny:hover { border-color: var(--primary); color: var(--primary); }
+.btn-save { background: var(--primary); color: #0F172A; border-color: var(--primary); font-weight: 700; }
+.btn-save:hover { background: var(--primary-dark); }
+
+.progress-edit-form {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-top: .4rem;
+    padding: .6rem .75rem;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+}
+.progress-edit-form input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--primary); }
+.progress-edit-form input[type="text"] {
+    flex: 2;
+    min-width: 120px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .3rem .6rem;
+    color: var(--text);
+    font-size: .82rem;
+    font-family: var(--font-body);
+}
+</style>
+<script>
+function toggleEditBio() {
+    const card = document.getElementById('editBioCard');
+    card.style.display = card.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleProgressEdit(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+}
+
+async function saveProgress(teacherId, skillName, rangeId, notesId, fillId, pctId, formId) {
+    const pct   = parseInt(document.getElementById(rangeId).value);
+    const notes = document.getElementById(notesId)?.value || '';
+
+    try {
+        const res = await fetch('/progress/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teacher_id: teacherId, skill_name: skillName, progress_pct: pct, notes })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            document.getElementById(fillId).style.width = pct + '%';
+            document.getElementById(pctId).textContent  = pct + '%';
+            document.getElementById(formId).style.display = 'none';
+            showToast('Progress saved! 🎉');
+        }
+    } catch(e) {
+        showToast('Could not save progress. Try again.', true);
+    }
+}
+
+function showToast(msg, isError = false) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = `position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+        padding:.75rem 1.25rem;border-radius:12px;font-size:.9rem;font-weight:600;
+        background:${isError ? '#7F1D1D' : '#064E3B'};color:${isError ? '#FCA5A5' : '#D1FAE5'};
+        box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slideIn .25s ease`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+</script>
+{% endblock %}

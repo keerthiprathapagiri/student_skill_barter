@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}SkillBarter – Trade Skills, Grow Together{% endblock %}
+
+{% block content %}
+
+<!-- ══════════ HERO ══════════ -->
+<section class="hero">
+    <div class="hero-bg">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-badge">🎓 Student-to-Student Skill Exchange</div>
+        <h1 class="hero-title">
+            Trade Skills.<br>
+            <span class="gradient-text">Grow Together.</span>
+        </h1>
+        <p class="hero-subtitle">
+            Connect with students who have what you need,<br>
+            offer what you know, and learn without spending a rupee.
+        </p>
+        {% if not session.user_id %}
+        <div class="hero-cta">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get Started Free</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg">Sign In</a>
+        </div>
+        {% else %}
+        <div class="hero-cta">
+            <a href="{{ url_for('main.profile') }}" class="btn btn-primary btn-lg">My Profile</a>
+            <a href="{{ url_for('chat.chat_list') }}" class="btn btn-outline btn-lg">Messages</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="hero-stats">
+        <div class="stat">
+            <span class="stat-num">∞</span>
+            <span class="stat-label">Skills to Trade</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+            <span class="stat-num">0₹</span>
+            <span class="stat-label">Cost to Join</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+            <span class="stat-num">Real-time</span>
+            <span class="stat-label">Chat &amp; Connect</span>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ SKILL SEARCH + MATCHER ══════════ -->
+<section class="search-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Find Your Match</h2>
+            <p>Search for a skill to find students who can teach you</p>
+        </div>
+
+        <!-- Search bar -->
+        <div class="search-bar-wrapper">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input
+                    type="text"
+                    id="skillSearch"
+                    placeholder="Search for a skill (e.g. Python, Figma, Guitar)…"
+                    autocomplete="off"
+                >
+                <button class="search-btn" onclick="searchSkills()">Search</button>
+            </div>
+        </div>
+
+        {% if session.user_id %}
+        <!-- Quick add skills inline on homepage -->
+        <div class="quick-skills">
+            <div class="quick-skill-form">
+                <h4>⚡ Quick-add a skill</h4>
+                <form method="POST" action="{{ url_for('main.add_skill_route') }}" class="inline-form">
+                    <input type="hidden" name="next" value="{{ url_for('main.index') }}">
+                    <input type="text" name="skill_name" placeholder="Skill name" required>
+                    <select name="skill_type">
+                        <option value="offered">I can teach this</option>
+                        <option value="needed">I want to learn this</option>
+                    </select>
+                    <button type="submit">Add</button>
+                </form>
+            </div>
+            {% if skills %}
+            <div class="my-skills-preview">
+                <span class="skills-label">📚 I offer:</span>
+                {% for s in skills.offered[:4] %}
+                    <span class="skill-tag skill-offered">{{ s.skill_name }}</span>
+                {% endfor %}
+                <span class="skills-label">🎯 I need:</span>
+                {% for s in skills.needed[:4] %}
+                    <span class="skill-tag skill-needed">{{ s.skill_name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Search results (dynamic) -->
+        <div id="searchResults" class="user-grid" style="display:none"></div>
+        <div id="searchEmpty" class="empty-state" style="display:none">
+            <div class="empty-icon">🔎</div>
+            <p>No students found for that skill yet.</p>
+            {% if not session.user_id %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Be the first to offer it!</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ SUGGESTED MATCHES ══════════ -->
+{% if session.user_id and matches %}
+<section class="matches-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>🤝 Your Suggested Matches</h2>
+            <p>Students whose skills align perfectly with yours</p>
+        </div>
+        <div class="user-grid" id="matchGrid">
+            {% for m in matches %}
+            <div class="user-card" data-user="{{ m.username }}">
+                <div class="card-avatar" style="background: {{ m.avatar_color }}">
+                    {{ m.full_name[0].upper() }}
+                </div>
+                <div class="card-body">
+                    <h3>{{ m.full_name }}</h3>
+                    <p class="card-username">@{{ m.username }}</p>
+                    {% if m.bio %}
+                        <p class="card-bio">{{ m.bio[:80] }}{% if m.bio|length > 80 %}…{% endif %}</p>
+                    {% endif %}
+                    <div class="card-skills">
+                        <div class="skill-row">
+                            <span class="skill-label">Offers:</span>
+                            {% for sk in m.offered_skills[:3] %}
+                                <span class="skill-tag skill-offered">{{ sk }}</span>
+                            {% endfor %}
+                            {% if m.offered_skills|length > 3 %}
+                                <span class="skill-more">+{{ m.offered_skills|length - 3 }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="skill-row">
+                            <span class="skill-label">Needs:</span>
+                            {% for sk in m.needed_skills[:3] %}
+                                <span class="skill-tag skill-needed">{{ sk }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a href="{{ url_for('chat.chat_with', username=m.username) }}" class="btn-card btn-chat">💬 Chat</a>
+                        <a href="{{ url_for('main.view_user', username=m.username) }}" class="btn-card btn-view">View</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% elif session.user_id %}
+<section class="matches-section">
+    <div class="container">
+        <div class="empty-state">
+            <div class="empty-icon">🧩</div>
+            <h3>No matches yet</h3>
+            <p>Add your offered and needed skills to discover matching students!</p>
+            <a href="{{ url_for('main.profile') }}" class="btn btn-primary">Update My Skills</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ══════════ HOW IT WORKS ══════════ -->
+<section class="how-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>How It Works</h2>
+            <p>Three simple steps to start bartering skills</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">01</div>
+                <div class="step-icon">📝</div>
+                <h3>Create Your Profile</h3>
+                <p>Register and list the skills you can teach and the skills you want to learn.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">02</div>
+                <div class="step-icon">🤝</div>
+                <h3>Find Your Match</h3>
+                <p>Our algorithm finds students whose skills perfectly complement yours.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">03</div>
+                <div class="step-icon">💬</div>
+                <h3>Chat &amp; Learn</h3>
+                <p>Connect in real-time, plan sessions, and track your progress together.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}

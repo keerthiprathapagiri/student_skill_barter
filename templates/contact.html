@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Contact Us – SkillBarter{% endblock %}
+
+{% block content %}
+<section class="hero" style="min-height: 30vh; padding: 4rem 1rem 2rem;">
+    <div class="hero-content">
+        <div class="hero-badge">📬 Get in Touch</div>
+        <h1 class="hero-title" style="font-size: clamp(2rem,5vw,3.5rem)">Contact Us</h1>
+        <p class="hero-subtitle">Have questions, feedback, or a bug to report? We'd love to hear from you.</p>
+    </div>
+</section>
+
+<section class="container" style="max-width: 640px; padding: 2rem 1rem 4rem;">
+    <div class="profile-header-card">
+        <form class="auth-form" style="width:100%" id="contactForm" onsubmit="submitContact(event)">
+            <div class="form-group">
+                <label>Your Name</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">✏️</span>
+                    <input type="text" name="name" placeholder="Full name" required
+                           value="{{ user.full_name if user else '' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">📧</span>
+                    <input type="email" name="email" placeholder="you@example.com" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Subject</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">💡</span>
+                    <input type="text" name="subject" placeholder="What's this about?" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <textarea name="message" rows="5" placeholder="Your message here…" required
+                          style="width:100%;padding:.75rem 1rem;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:1rem;resize:vertical;"></textarea>
+            </div>
+            <button type="submit" class="auth-btn">Send Message ✈️</button>
+        </form>
+        <div id="contactSuccess" style="display:none; text-align:center; padding: 2rem;">
+            <div style="font-size:3rem">🎉</div>
+            <h3>Message sent!</h3>
+            <p>We'll get back to you as soon as possible.</p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary" style="margin-top:1rem">Go Home</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function submitContact(e) {
+    e.preventDefault();
+    // In a real app you'd POST to a backend endpoint
+    document.getElementById('contactForm').style.display = 'none';
+    document.getElementById('contactSuccess').style.display = 'block';
+}
+</script>
+{% endblock %}

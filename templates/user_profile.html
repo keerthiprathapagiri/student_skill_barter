@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ target.full_name }} – SkillBarter{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+
+    <a href="{{ url_for('main.index') }}" class="back-link-inline">← Back</a>
+
+    <div class="profile-header-card">
+        <div class="profile-avatar-lg" style="background: {{ target.avatar_color }}">
+            {{ target.full_name[0].upper() }}
+        </div>
+        <div class="profile-header-info">
+            <h1>{{ target.full_name }}</h1>
+            <p class="profile-username">@{{ target.username }}</p>
+            <p class="profile-bio-text">{{ target.bio or 'This student hasn\'t added a bio yet.' }}</p>
+        </div>
+        {% if current_user and current_user.id != target.id %}
+        <a href="{{ url_for('chat.chat_with', username=target.username) }}" class="btn btn-primary">
+            💬 Send Message
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="profile-grid">
+        <div class="profile-card">
+            <div class="card-title">
+                <span>✅ Skills Offered</span>
+                <span class="badge-count">{{ skills.offered|length }}</span>
+            </div>
+            <div class="skill-list">
+                {% for s in skills.offered %}
+                    <span class="skill-tag skill-offered">{{ s.skill_name }}</span>
+                {% else %}
+                    <p class="empty-hint">No skills listed yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <div class="card-title">
+                <span>🎯 Skills Needed</span>
+                <span class="badge-count">{{ skills.needed|length }}</span>
+            </div>
+            <div class="skill-list">
+                {% for s in skills.needed %}
+                    <span class="skill-tag skill-needed">{{ s.skill_name }}</span>
+                {% else %}
+                    <p class="empty-hint">No skills listed yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
