@@ -7,20 +7,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Fix DATABASE_URL for Render (postgres:// → postgresql://)
+# Fix DATABASE_URL for Render and force psycopg3 driver
 database_url = os.environ.get("DATABASE_URL")
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql+psycopg://",
+            1
+        )
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace(
+            "postgresql://",
+            "postgresql+psycopg://",
+            1
+        )
 
 
 class Config:
     """Base configuration shared by all environments."""
 
     # ── Security ──────────────────────────────────────────────────
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-CHANGE-ME-in-production')
+    SECRET_KEY = os.getenv(
+        'SECRET_KEY',
+        'dev-secret-CHANGE-ME-in-production'
+    )
 
     # ── PostgreSQL ────────────────────────────────────────────────
-    SQLALCHEMY_DATABASE_URI = database_url or 'postgresql://postgres@localhost/skill_barter_db'
+    SQLALCHEMY_DATABASE_URI = (
+        database_url
+        or 'postgresql+psycopg://postgres@localhost/skill_barter_db'
+    )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # ── Session ───────────────────────────────────────────────────
@@ -43,8 +62,10 @@ class ProductionConfig(Config):
 # Active config selected by FLASK_ENV env var
 config_map = {
     'development': DevelopmentConfig,
-    'production':  ProductionConfig,
+    'production': ProductionConfig,
 }
 
-ActiveConfig = config_map.get(os.getenv('FLASK_ENV', 'development'), DevelopmentConfig)
-
+ActiveConfig = config_map.get(
+    os.getenv('FLASK_ENV', 'development'),
+    DevelopmentConfig
+)
