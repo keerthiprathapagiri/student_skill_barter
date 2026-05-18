@@ -1,53 +1,48 @@
 # config.py
-# Centralised Flask configuration
-# Values are read from environment variables (set in .env)
 
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Fix DATABASE_URL for Render and force psycopg3 driver
 database_url = os.environ.get("DATABASE_URL")
 
-if database_url:
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace(
-            "postgres://",
-            "postgresql+psycopg://",
-            1
-        )
-    elif database_url.startswith("postgresql://"):
-        database_url = database_url.replace(
-            "postgresql://",
-            "postgresql+psycopg://",
-            1
-        )
+# Fix old postgres:// format
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace(
+        "postgres://",
+        "postgresql://",
+        1
+    )
+
+# Add SSL mode for Render PostgreSQL
+if database_url and "sslmode" not in database_url:
+    if "?" in database_url:
+        database_url += "&sslmode=require"
+    else:
+        database_url += "?sslmode=require"
 
 
 class Config:
-    """Base configuration shared by all environments."""
-
-    # ── Security ──────────────────────────────────────────────────
     SECRET_KEY = os.getenv(
-        'SECRET_KEY',
-        'dev-secret-CHANGE-ME-in-production'
+        "SECRET_KEY",
+        "Studentskillbarter"
     )
 
-    # ── PostgreSQL ────────────────────────────────────────────────
-    SQLALCHEMY_DATABASE_URI = (
-        database_url
-        or 'postgresql+psycopg://postgres@localhost/skill_barter_db'
-    )
+    SQLALCHEMY_DATABASE_URI = database_url
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # ── Session ───────────────────────────────────────────────────
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    # Prevent stale PostgreSQL connections
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
-    # ── SocketIO ──────────────────────────────────────────────────
-    SOCKETIO_ASYNC_MODE = 'eventlet'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+
+    SOCKETIO_ASYNC_MODE = "threading"
 
 
 class DevelopmentConfig(Config):
@@ -56,16 +51,15 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SESSION_COOKIE_SECURE = True   # only send cookie over HTTPS
+    SESSION_COOKIE_SECURE = True
 
 
-# Active config selected by FLASK_ENV env var
 config_map = {
-    'development': DevelopmentConfig,
-    'production': ProductionConfig,
+    "development": DevelopmentConfig,
+    "production": ProductionConfig,
 }
 
 ActiveConfig = config_map.get(
-    os.getenv('FLASK_ENV', 'development'),
-    DevelopmentConfig
+    os.getenv("FLASK_ENV", "production"),
+    ProductionConfig
 )
