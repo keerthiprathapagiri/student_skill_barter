@@ -14,15 +14,15 @@ student_skill_barter/
 │
 ├── database/
 │   ├── __init__.py
-│   ├── db.py               ← MySQL connection (Flask-MySQLdb)
-│   └── schema.sql          ← Database tables + sample data
+│   ├── db.py               ← PostgreSQL connection (Flask-SQLAlchemy)
+│   └── schema.sql          ← Database tables (reference only)
 │
 ├── models/
 │   ├── __init__.py
-│   ├── user.py             ← User CRUD queries
-│   ├── skill.py            ← Skill queries + matching algorithm
-│   ├── message.py          ← Chat message queries
-│   └── progress.py         ← Learning progress queries
+│   ├── user.py             ← User model + CRUD queries
+│   ├── skill.py            ← Skill model + matching algorithm
+│   ├── message.py          ← Message model + chat queries
+│   └── progress.py         ← LearningProgress model + queries
 │
 ├── routes/
 │   ├── __init__.py
@@ -61,7 +61,7 @@ student_skill_barter/
 | Tool | Version |
 |------|---------|
 | Python | 3.10+ |
-| MySQL | 8.0+ |
+| PostgreSQL | 12+ |
 | pip | latest |
 
 ---
@@ -95,29 +95,22 @@ source venv/bin/activate
 ### 4. Install Python Dependencies
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
-
-> **Note:** If `mysqlclient` fails to install on Windows, try:
-> ```bash
-> pip install PyMySQL
-> ```
-> Then change `Flask-MySQLdb` to `flask-pymysql` in requirements and update `database/db.py` accordingly.
 
 ---
 
-### 5. Set Up MySQL Database
+### 5. Set Up PostgreSQL Database
 
-Open MySQL Workbench or the MySQL CLI:
+Install PostgreSQL (if not already installed), then:
 
-```sql
--- Run the schema file
-SOURCE /path/to/student_skill_barter/database/schema.sql;
+```bash
+# Create database via psql CLI
+psql -U postgres
 
--- Or manually:
+# In psql prompt:
 CREATE DATABASE skill_barter_db;
-USE skill_barter_db;
--- then paste the contents of schema.sql
+\q
 ```
 
 ---
@@ -132,13 +125,12 @@ Edit `.env`:
 
 ```env
 SECRET_KEY=your-super-secret-key-here
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=your_mysql_password
-MYSQL_DB=skill_barter_db
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/skill_barter_db
 ```
 
-If you see a login or registration error about database connection, double-check these MySQL credentials and make sure the `skill_barter_db` database is initialized.
+For **Render deployment**:
+- Add `DATABASE_URL` as an environment variable in the Render dashboard
+- Render automatically converts `postgres://` to `postgresql://` (our app handles both)
 
 ---
 
@@ -174,7 +166,7 @@ Open your browser at: **http://localhost:5000**
 - Socket.IO powered instant messaging
 - Typing indicators
 - Unread message badges
-- Message history stored in MySQL
+- Message history stored in PostgreSQL
 
 ### 🎨 UI/UX
 - Dark mode design system with sky-blue accents
@@ -192,7 +184,7 @@ Open your browser at: **http://localhost:5000**
 | Frontend | HTML5, CSS3 (custom design system), Vanilla JS |
 | Backend | Python Flask 3.0 |
 | Real-time | Flask-SocketIO + Socket.IO |
-| Database | MySQL 8 via Flask-MySQLdb |
+| Database | PostgreSQL 12+ via Flask-SQLAlchemy |
 | Auth | Werkzeug password hashing |
 | Fonts | Syne + DM Sans (Google Fonts) |
 
@@ -234,17 +226,23 @@ Open your browser at: **http://localhost:5000**
 
 ## 🐛 Troubleshooting
 
-**`ModuleNotFoundError: No module named 'MySQLdb'`**
-→ Run: `pip install mysqlclient` (needs MySQL dev headers on Linux: `sudo apt install libmysqlclient-dev`)
+**`ModuleNotFoundError: No module named 'psycopg2'`**
+→ Run: `python -m pip install psycopg2-binary`
 
-**`Access denied for user 'root'@'localhost'`**
-→ Check your `.env` password matches MySQL
+**`connection to server at "localhost"... failed`**
+→ Check PostgreSQL is running and DATABASE_URL is correct in `.env`
+
+**`psycopg2.OperationalError: FATAL: role "postgres" does not exist`**
+→ Update DATABASE_URL with correct PostgreSQL credentials
 
 **Socket.IO not connecting**
-→ Make sure `eventlet` is installed: `pip install eventlet`
+→ Make sure `eventlet` is installed: `python -m pip install eventlet`
 
 **Port 5000 already in use**
 → Change port in `app.py`: `socketio.run(app, port=5001)`
+
+**Tables not created automatically**
+→ The app should create tables automatically on first run. If not, check DATABASE_URL is valid.
 
 ---
 

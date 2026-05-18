@@ -1,9 +1,58 @@
 # models/user.py
-# All database queries related to users
+# User model and database queries
 
-from database.db import get_cursor, commit
-import MySQLdb
-import MySQLdb.cursors
+import random
+from database.db import db
+
+
+class User(db.Model):
+    """User account model."""
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(100), nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    bio = db.Column(db.Text)
+    avatar_color = db.Column(db.String(7), default='#4A90D9')
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+    # Relationships
+    skills = db.relationship('Skill', back_populates='user', cascade='all, delete-orphan')
+    messages_sent = db.relationship(
+        'Message', 
+        foreign_keys='Message.sender_id',
+        back_populates='sender',
+        cascade='all, delete-orphan'
+    )
+    messages_received = db.relationship(
+        'Message',
+        foreign_keys='Message.receiver_id',
+        back_populates='receiver',
+        cascade='all, delete-orphan'
+    )
+    learning = db.relationship(
+        'LearningProgress',
+        foreign_keys='LearningProgress.learner_id',
+        back_populates='learner',
+        cascade='all, delete-orphan'
+    )
+    teaching = db.relationship(
+        'LearningProgress',
+        foreign_keys='LearningProgress.teacher_id',
+        back_populates='teacher',
+        cascade='all, delete-orphan'
+    )
+
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization."""
+        return {
+            'id': self.id,
+            'full_name': self.full_name,
+            'username': self.username,
+            'bio': self.bio,
+            'avatar_color': self.avatar_color,
+        }
 
 
 class DatabaseError(Exception):
@@ -13,68 +62,70 @@ class DatabaseError(Exception):
         self.original = original
 
 
-# ---------- helpers ----------
-
-def _dict_cursor():
-    """Return a cursor that yields rows as plain dicts."""
-    from database.db import mysql
-    return mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-
-# ---------- CRUD ----------
+# ────────────────────────────────────────────────────────────────────────
+# CRUD Operations
+# ────────────────────────────────────────────────────────────────────────
 
 def create_user(full_name, username, hashed_password):
-    """Insert a new user; returns the new row id."""
-    import random
-    colors = ['#E74C3C','#2ECC71','#9B59B6','#E67E22','#1ABC9C','#3498DB','#F39C12','#E91E63']
-    color = random.choice(colors)
-
+    """Insert a new user; returns the new user id."""
     try:
-        cur = _dict_cursor()
-        cur.execute(
-            "INSERT INTO users (full_name, username, password, avatar_color) VALUES (%s,%s,%s,%s)",
-            (full_name, username, hashed_password, color)
+        colors = ['#E74C3C','#2ECC71','#9B59B6','#E67E22','#1ABC9C','#3498DB','#F39C12','#E91E63']
+        color = random.choice(colors)
+        
+        new_user = User(
+            full_name=full_name,
+            username=username,
+            password=hashed_password,
+            avatar_color=color
         )
-        commit()
-        return cur.lastrowid
-    except MySQLdb.Error as exc:
+        db.session.add(new_user)
+        db.session.commit()
+        return new_user.id
+    except Exception as exc:
+        db.session.rollback()
         raise DatabaseError(f"Database error creating user: {exc}", original=exc)
 
 
 def get_user_by_username(username):
-    """Fetch a user row by username (or None)."""
+    """Fetch a user by username (or None)."""
     try:
-        cur = _dict_cursor()
-        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
-        return cur.fetchone()
-    except MySQLdb.Error as exc:
+        return User.query.filter_by(username=username).first()
+    except Exception as exc:
         raise DatabaseError(f"Database error fetching user: {exc}", original=exc)
 
 
 def get_user_by_id(user_id):
-    """Fetch a user row by primary key (or None)."""
-    cur = _dict_cursor()
-    cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    return cur.fetchone()
+    """Fetch a user by primary key (or None)."""
+    try:
+        return User.query.get(user_id)
+    except Exception as exc:
+        raise DatabaseError(f"Database error fetching user: {exc}", original=exc)
 
 
 def update_bio(user_id, bio):
-    cur = _dict_cursor()
-    cur.execute("UPDATE users SET bio = %s WHERE id = %s", (bio, user_id))
-    commit()
+    """Update user bio."""
+    try:
+        user = User.query.get(user_id)
+        if user:
+            user.bio = bio
+            db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        raise DatabaseError(f"Database error updating bio: {exc}", original=exc)
 
 
 def username_exists(username):
+    """Check if username already exists."""
     try:
-        cur = _dict_cursor()
-        cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-        return cur.fetchone() is not None
-    except MySQLdb.Error as exc:
+        return User.query.filter_by(username=username).first() is not None
+    except Exception as exc:
         raise DatabaseError(f"Database error checking username: {exc}", original=exc)
 
 
 def get_all_users_except(user_id):
     """Return all users except the given one (for discovery)."""
-    cur = _dict_cursor()
-    cur.execute("SELECT * FROM users WHERE id != %s", (user_id,))
-    return cur.fetchall()
+    try:
+        return User.query.filter(User.id != user_id).all()
+    except Exception as exc:
+        raise DatabaseError(f"Database error fetching users: {exc}", original=exc)
+

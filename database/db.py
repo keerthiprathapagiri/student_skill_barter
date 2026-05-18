@@ -1,17 +1,7 @@
 # database/db.py
-# Handles MySQL connection using Flask-MySQLdb
-# Configure your credentials in .env or config.py
+# Handles PostgreSQL connection using Flask-SQLAlchemy
 
-from flask_mysqldb import MySQL
+from flask_sqlalchemy import SQLAlchemy
 
-mysql = MySQL()  # initialized in app.py via init_app()
+db = SQLAlchemy()
 
-
-def get_cursor():
-    """Return a DictCursor so rows come back as dicts, not tuples."""
-    return mysql.connection.cursor()
-
-
-def commit():
-    """Shortcut to commit a transaction."""
-    mysql.connection.commit()

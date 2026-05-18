@@ -49,10 +49,10 @@ def register():
             flash('Account created! Welcome to Skill Barter 🎉', 'success')
             return redirect(url_for('main.index'))
         except DatabaseError as exc:
-            msg = 'Database connection failed. Check your MySQL credentials and .env file.'
+            msg = 'Database connection failed. Check your DATABASE_URL environment variable and .env file.'
             details = str(getattr(exc, 'original', exc))
-            if '1146' in details or "doesn't exist" in details:
-                msg = 'Database schema is not initialized. Run database/schema.sql and make sure the users table exists.'
+            if 'relation' in details or "doesn't exist" in details:
+                msg = 'Database schema is not initialized. Please ensure PostgreSQL is configured and tables are created.'
             flash(msg, 'error')
             return render_template('register.html')
 
@@ -67,20 +67,20 @@ def login():
         password = request.form.get('password', '')
 
         try:
-            user = get_user_by_username(username)
+            user_obj = get_user_by_username(username)
         except DatabaseError as exc:
-            msg = 'Database connection failed. Check your MySQL credentials and .env file.'
+            msg = 'Database connection failed. Check your DATABASE_URL environment variable and .env file.'
             details = str(getattr(exc, 'original', exc))
-            if '1146' in details or "doesn't exist" in details:
-                msg = 'Database schema is not initialized. Run database/schema.sql and make sure the users table exists.'
+            if 'relation' in details or "doesn't exist" in details:
+                msg = 'Database schema is not initialized. Please ensure PostgreSQL is configured and tables are created.'
             flash(msg, 'error')
             return render_template('login.html')
 
-        if user and check_password_hash(user['password'], password):
-            session['user_id']  = user['id']
-            session['username'] = user['username']
-            session['full_name'] = user['full_name']
-            flash(f"Welcome back, {user['full_name']}!", 'success')
+        if user_obj and check_password_hash(user_obj.password, password):
+            session['user_id']  = user_obj.id
+            session['username'] = user_obj.username
+            session['full_name'] = user_obj.full_name
+            flash(f"Welcome back, {user_obj.full_name}!", 'success')
             return redirect(url_for('main.index'))
         else:
             flash('Invalid username or password.', 'error')

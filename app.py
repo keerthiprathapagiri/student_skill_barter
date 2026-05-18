@@ -3,14 +3,14 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from config import ActiveConfig
-from database.db import mysql
+from database.db import db
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(ActiveConfig)
 
-    mysql.init_app(app)
+    db.init_app(app)
 
     from routes.auth import auth_bp
     from routes.main import main_bp
@@ -19,6 +19,10 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(chat_bp)
+
+    # Create database tables if they don't exist
+    with app.app_context():
+        db.create_all()
 
     return app
 

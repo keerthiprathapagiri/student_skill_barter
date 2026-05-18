@@ -14,12 +14,16 @@ class Config:
     # ── Security ──────────────────────────────────────────────────
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-CHANGE-ME-in-production')
 
-    # ── MySQL ─────────────────────────────────────────────────────
-    MYSQL_HOST     = os.getenv('MYSQL_HOST',     'localhost')
-    MYSQL_USER     = os.getenv('MYSQL_USER',     'root')
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
-    MYSQL_DB       = os.getenv('MYSQL_DB',       'skill_barter_db')
-    MYSQL_CURSORCLASS = 'DictCursor'   # rows come back as plain dicts
+    # ── PostgreSQL ────────────────────────────────────────────────
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url and database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    
+    SQLALCHEMY_DATABASE_URI = database_url or os.getenv(
+        'DATABASE_URL',
+        'postgresql://root@localhost/skill_barter_db'
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # ── Session ───────────────────────────────────────────────────
     SESSION_COOKIE_HTTPONLY = True

@@ -33,10 +33,11 @@ def index():
     unread = 0
 
     if 'user_id' in session:
-        user   = get_user_by_id(session['user_id'])
+        user_obj = get_user_by_id(session['user_id'])
+        user = user_obj.to_dict() if user_obj else None
         skills = get_skills_for_user(session['user_id'])
         matches = get_suggested_matches(session['user_id'])
-        unread  = get_unread_count(session['user_id'])
+        unread = get_unread_count(session['user_id'])
 
     return render_template('index.html',
                            user=user,
@@ -49,7 +50,8 @@ def index():
 @main_bp.route('/profile')
 @login_required
 def profile():
-    user     = get_user_by_id(session['user_id'])
+    user_obj = get_user_by_id(session['user_id'])
+    user = user_obj.to_dict() if user_obj else None
     skills   = get_skills_for_user(session['user_id'])
     learning = get_my_learning(session['user_id'])
     teaching = get_my_teaching(session['user_id'])
@@ -121,12 +123,14 @@ def api_matches():
 @main_bp.route('/user/<username>')
 def view_user(username):
     from models.user import get_user_by_username
-    target = get_user_by_username(username)
-    if not target:
+    target_obj = get_user_by_username(username)
+    if not target_obj:
         flash('User not found.', 'error')
         return redirect(url_for('main.index'))
-    skills = get_skills_for_user(target['id'])
-    current_user = get_user_by_id(session['user_id']) if 'user_id' in session else None
+    target = target_obj.to_dict()
+    skills = get_skills_for_user(target_obj.id)
+    current_user_obj = get_user_by_id(session['user_id']) if 'user_id' in session else None
+    current_user = current_user_obj.to_dict() if current_user_obj else None
     unread = get_unread_count(session['user_id']) if 'user_id' in session else 0
     return render_template('user_profile.html',
                            target=target,
@@ -138,7 +142,8 @@ def view_user(username):
 # ── Contact page ──────────────────────────────────────────────────────────────
 @main_bp.route('/contact')
 def contact():
-    user   = get_user_by_id(session['user_id']) if 'user_id' in session else None
+    user_obj = get_user_by_id(session['user_id']) if 'user_id' in session else None
+    user = user_obj.to_dict() if user_obj else None
     unread = get_unread_count(session['user_id']) if 'user_id' in session else 0
     return render_template('contact.html', user=user, unread=unread)
 
@@ -171,7 +176,8 @@ from flask import Blueprint
 
 @main_bp.app_errorhandler(404)
 def not_found(e):
-    user   = get_user_by_id(session['user_id']) if 'user_id' in session else None
+    user_obj = get_user_by_id(session['user_id']) if 'user_id' in session else None
+    user = user_obj.to_dict() if user_obj else None
     unread = get_unread_count(session['user_id']) if 'user_id' in session else 0
     return render_template('404.html', user=user, unread=unread), 404
 

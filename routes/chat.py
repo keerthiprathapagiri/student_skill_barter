@@ -40,7 +40,7 @@ def init_socketio(sio):
         msg_id = save_message(sender_id, receiver_id, message)
 
         # Lookup sender info for display
-        sender = get_user_by_id(sender_id)
+        sender_obj = get_user_by_id(sender_id)
 
         # Broadcast to room
         room = _room(sender_id, receiver_id)
@@ -48,8 +48,8 @@ def init_socketio(sio):
             'id':          msg_id,
             'sender_id':   sender_id,
             'receiver_id': receiver_id,
-            'sender_name': sender['username'] if sender else 'Unknown',
-            'sender_color': sender['avatar_color'] if sender else '#4A90D9',
+            'sender_name': sender_obj.username if sender_obj else 'Unknown',
+            'sender_color': sender_obj.avatar_color if sender_obj else '#4A90D9',
             'message':     message,
             'sent_at':     datetime.now().strftime('%H:%M'),
         }, room=room)
@@ -81,7 +81,8 @@ def chat_list():
     if 'user_id' not in session:
         flash('Please log in to use chat.', 'info')
         return redirect(url_for('auth.login'))
-    user     = get_user_by_id(session['user_id'])
+    user_obj = get_user_by_id(session['user_id'])
+    user = user_obj.to_dict() if user_obj else None
     contacts = get_contacts(session['user_id'])
     unread   = get_unread_count(session['user_id'])
     return render_template('chat.html', user=user, contacts=contacts, unread=unread, active_chat=None)
@@ -93,18 +94,20 @@ def chat_with(username):
         flash('Please log in to use chat.', 'info')
         return redirect(url_for('auth.login'))
 
-    target = get_user_by_username(username)
-    if not target:
+    target_obj = get_user_by_username(username)
+    if not target_obj:
         flash('User not found.', 'error')
         return redirect(url_for('chat.chat_list'))
-
-    user         = get_user_by_id(session['user_id'])
-    contacts     = get_contacts(session['user_id'])
-    messages     = get_conversation(session['user_id'], target['id'])
-    unread       = get_unread_count(session['user_id'])
+    
+    target = target_obj.to_dict()
+    user_obj = get_user_by_id(session['user_id'])
+    user = user_obj.to_dict() if user_obj else None
+    contacts = get_contacts(session['user_id'])
+    messages = get_conversation(session['user_id'], target_obj.id)
+    unread = get_unread_count(session['user_id'])
 
     # Mark incoming messages as read
-    mark_as_read(target['id'], session['user_id'])
+    mark_as_read(target_obj.id, session['user_id'])
 
     return render_template('chat.html',
                            user=user,
