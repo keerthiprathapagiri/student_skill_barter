@@ -25,18 +25,24 @@
                 <div class="contact-avatar" style="background: {{ c.avatar_color }}">
                     {{ c.full_name[0].upper() }}
                 </div>
+
                 <div class="contact-info">
                     <div class="contact-top">
                         <span class="contact-name">{{ c.username }}</span>
+
                         {% if c.unread > 0 %}
                             <span class="unread-dot">{{ c.unread }}</span>
                         {% endif %}
                     </div>
-                    <span class="contact-preview">{{ c.last_message[:40] if c.last_message else 'Start a conversation' }}…</span>
+
+                    <span class="contact-preview">
+                        {{ c.last_message[:40] if c.last_message else 'Start a conversation' }}…
+                    </span>
                 </div>
             </a>
             {% endfor %}
         </div>
+
         {% else %}
         <div class="sidebar-empty">
             <div>💬</div>
@@ -48,39 +54,80 @@
 
     <!-- ── Chat Window ── -->
     <main class="chat-main">
+
         {% if active_chat %}
 
-        <!-- Chat header -->
+        <!-- Chat Header -->
         <div class="chat-header">
             <div class="chat-avatar" style="background: {{ active_chat.avatar_color }}">
                 {{ active_chat.full_name[0].upper() }}
             </div>
+
             <div>
                 <strong>{{ active_chat.full_name }}</strong>
                 <span>@{{ active_chat.username }}</span>
             </div>
+
             <div style="display:flex;gap:.5rem;align-items:center;margin-left:auto;">
-                <button class="btn btn-outline-sm" onclick="toggleExchangePanel()" title="Log a skill exchange">📋 Log Exchange</button>
-                <a href="{{ url_for('main.view_user', username=active_chat.username) }}" class="btn btn-outline-sm">View Profile</a>
+                <button
+                    class="btn btn-outline-sm"
+                    onclick="toggleExchangePanel()"
+                    title="Log a skill exchange">
+                    📋 Log Exchange
+                </button>
+
+                <a
+                    href="{{ url_for('main.view_user', username=active_chat.username) }}"
+                    class="btn btn-outline-sm">
+                    View Profile
+                </a>
             </div>
         </div>
 
-        <!-- Skill Exchange Log Panel (hidden by default) -->
-        <div id="exchangePanel" style="display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:.875rem 1.25rem;">
-            <p style="font-size:.85rem;font-weight:600;margin-bottom:.6rem;color:var(--text-muted);">📋 Log your skill exchange with @{{ active_chat.username }}</p>
+        <!-- Exchange Panel -->
+        <div
+            id="exchangePanel"
+            style="display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:.875rem 1.25rem;">
+
+            <p style="font-size:.85rem;font-weight:600;margin-bottom:.6rem;color:var(--text-muted);">
+                📋 Log your skill exchange with @{{ active_chat.username }}
+            </p>
+
             <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
-                <input type="text" id="exchangeSkill" placeholder="Skill name (e.g. Python)"
+
+                <input
+                    type="text"
+                    id="exchangeSkill"
+                    placeholder="Skill name (e.g. Python)"
                     style="flex:2;min-width:130px;padding:.5rem .75rem;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:.88rem">
-                <input type="range" id="exchangePct" min="0" max="100" value="25"
+
+                <input
+                    type="range"
+                    id="exchangePct"
+                    min="0"
+                    max="100"
+                    value="25"
                     oninput="document.getElementById('exchangePctVal').textContent=this.value+'%'"
                     style="flex:1;min-width:100px;accent-color:var(--primary)">
-                <span id="exchangePctVal" style="font-size:.85rem;min-width:35px;text-align:right;">25%</span>
-                <select id="exchangeRole" style="padding:.5rem .6rem;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:.85rem">
+
+                <span
+                    id="exchangePctVal"
+                    style="font-size:.85rem;min-width:35px;text-align:right;">
+                    25%
+                </span>
+
+                <select
+                    id="exchangeRole"
+                    style="padding:.5rem .6rem;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:.85rem">
+
                     <option value="learner">I'm learning this</option>
                     <option value="teacher">I'm teaching this</option>
                 </select>
-                <button onclick="logExchange({{ active_chat.id }})"
+
+                <button
+                    onclick="logExchange({{ active_chat.id }})"
                     style="padding:.5rem 1rem;background:var(--primary);color:#0F172A;border:none;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer;">
+
                     Save
                 </button>
             </div>
@@ -88,115 +135,208 @@
 
         <!-- Messages -->
         <div class="messages-area" id="messagesArea">
+
             {% if messages %}
+
                 {% for msg in messages %}
+
                 <div class="message {% if msg.sender_id == user.id %}message-out{% else %}message-in{% endif %}">
-                    <div class="bubble">{{ msg.message }}</div>
-                    <span class="msg-time">{{ msg.sent_at.strftime('%H:%M') if msg.sent_at else '' }}</span>
+
+                    <div class="bubble">
+                        {{ msg.message }}
+                    </div>
+
+                    <span class="msg-time">
+                        {{ msg.sent_at.split('T')[1][:5] if msg.sent_at else '' }}
+                    </span>
+
                 </div>
+
                 {% endfor %}
+
             {% else %}
+
                 <div class="chat-start-hint">
                     <span>👋</span>
                     <p>Say hello to {{ active_chat.full_name }}!</p>
                 </div>
+
             {% endif %}
         </div>
 
-        <!-- Typing indicator -->
+        <!-- Typing -->
         <div class="typing-indicator" id="typingIndicator" style="display:none">
             <span>{{ active_chat.username }} is typing</span>
-            <span class="typing-dots"><span></span><span></span><span></span></span>
+
+            <span class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
         </div>
 
-        <!-- Message input -->
+        <!-- Input -->
         <div class="chat-input-area">
+
             <input
                 type="text"
                 id="messageInput"
                 placeholder="Type a message…"
                 autocomplete="off"
-                maxlength="1000"
-            >
-            <button id="sendBtn" onclick="sendMessage()">Send ➤</button>
+                maxlength="1000">
+
+            <button id="sendBtn" onclick="sendMessage()">
+                Send ➤
+            </button>
         </div>
 
         {% else %}
-        <!-- No active chat selected -->
+
+        <!-- No Chat -->
         <div class="chat-placeholder">
             <div class="placeholder-icon">💬</div>
+
             <h3>Select a conversation</h3>
-            <p>Choose someone from the sidebar or <a href="{{ url_for('main.index') }}">find a match</a> to start chatting.</p>
+
+            <p>
+                Choose someone from the sidebar or
+                <a href="{{ url_for('main.index') }}">
+                    find a match
+                </a>
+                to start chatting.
+            </p>
         </div>
+
         {% endif %}
     </main>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+
 <script>
 const CURRENT_USER_ID  = {{ user.id }};
 const CURRENT_USERNAME = "{{ user.username }}";
+
 {% if active_chat %}
-const RECEIVER_ID      = {{ active_chat.id }};
-const RECEIVER_NAME    = "{{ active_chat.username }}";
+const RECEIVER_ID   = {{ active_chat.id }};
+const RECEIVER_NAME = "{{ active_chat.username }}";
 {% else %}
-const RECEIVER_ID      = null;
-const RECEIVER_NAME    = null;
+const RECEIVER_ID   = null;
+const RECEIVER_NAME = null;
 {% endif %}
 </script>
+
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
 <script>
-/* ── Skill exchange log panel ─────────────────────────── */
 function toggleExchangePanel() {
     const p = document.getElementById('exchangePanel');
-    if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+
+    if (p) {
+        p.style.display =
+            p.style.display === 'none'
+            ? 'block'
+            : 'none';
+    }
 }
 
 async function logExchange(partnerId) {
-    const skill    = document.getElementById('exchangeSkill')?.value.trim();
-    const pct      = parseInt(document.getElementById('exchangePct')?.value || 0);
-    const role     = document.getElementById('exchangeRole')?.value;
 
-    if (!skill) { alert('Please enter a skill name.'); return; }
+    const skill =
+        document.getElementById('exchangeSkill')?.value.trim();
 
-    // Determine who is teacher and who is learner based on role
-    const teacherId = role === 'learner' ? partnerId : CURRENT_USER_ID;
-    const learnerId = role === 'learner' ? CURRENT_USER_ID : partnerId;
+    const pct =
+        parseInt(
+            document.getElementById('exchangePct')?.value || 0
+        );
+
+    const role =
+        document.getElementById('exchangeRole')?.value;
+
+    if (!skill) {
+        alert('Please enter a skill name.');
+        return;
+    }
+
+    const teacherId =
+        role === 'learner'
+        ? partnerId
+        : CURRENT_USER_ID;
 
     try {
-        // We always save from the learner's perspective
-        const payload = role === 'learner'
-            ? { teacher_id: teacherId, skill_name: skill, progress_pct: pct, notes: '' }
-            : { teacher_id: CURRENT_USER_ID, skill_name: skill, progress_pct: pct, notes: '' };
+
+        const payload =
+            role === 'learner'
+            ? {
+                teacher_id: teacherId,
+                skill_name: skill,
+                progress_pct: pct,
+                notes: ''
+            }
+            : {
+                teacher_id: CURRENT_USER_ID,
+                skill_name: skill,
+                progress_pct: pct,
+                notes: ''
+            };
 
         const res = await fetch('/progress/update', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(payload)
         });
+
         const data = await res.json();
 
         if (data.ok) {
+
             toggleExchangePanel();
+
             document.getElementById('exchangeSkill').value = '';
-            showChatToast('Exchange logged! Check your profile to track progress. 🎉');
+
+            showChatToast(
+                'Exchange logged! Check your profile to track progress. 🎉'
+            );
         }
+
     } catch(e) {
-        showChatToast('Could not save. Please try again.', true);
+
+        showChatToast(
+            'Could not save. Please try again.',
+            true
+        );
     }
 }
 
 function showChatToast(msg, isError = false) {
+
     const t = document.createElement('div');
+
     t.textContent = msg;
-    t.style.cssText = `position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
-        padding:.75rem 1.25rem;border-radius:12px;font-size:.88rem;font-weight:600;
-        background:${isError ? '#7F1D1D' : '#064E3B'};color:${isError ? '#FCA5A5' : '#D1FAE5'};
-        box-shadow:0 4px 20px rgba(0,0,0,.4);`;
+
+    t.style.cssText = `
+        position:fixed;
+        bottom:1.5rem;
+        right:1.5rem;
+        z-index:999;
+        padding:.75rem 1.25rem;
+        border-radius:12px;
+        font-size:.88rem;
+        font-weight:600;
+        background:${isError ? '#7F1D1D' : '#064E3B'};
+        color:${isError ? '#FCA5A5' : '#D1FAE5'};
+        box-shadow:0 4px 20px rgba(0,0,0,.4);
+    `;
+
     document.body.appendChild(t);
+
     setTimeout(() => t.remove(), 3500);
 }
 </script>
+
 {% endblock %}
