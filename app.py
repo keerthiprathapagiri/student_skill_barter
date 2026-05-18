@@ -8,7 +8,7 @@ from database.db import db
 
 def create_app():
     """Create and configure Flask app."""
-    
+
     app = Flask(__name__)
     app.config.from_object(ActiveConfig)
 
@@ -24,9 +24,24 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(chat_bp)
 
+    # Import models BEFORE create_all()
+    # Add all your models here
+    try:
+        from models.user import User
+
+        # If you have message model:
+        # from models.message import Message
+
+    except Exception as e:
+        print(f"Model import warning: {e}")
+
     # Create tables
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+            print("✅ Database tables created successfully")
+        except Exception as e:
+            print(f"❌ Database error: {e}")
 
     return app
 
@@ -37,12 +52,17 @@ app = create_app()
 # Initialize SocketIO
 socketio = SocketIO(
     app,
-    cors_allowed_origins="*"
+    cors_allowed_origins="*",
+    async_mode="threading"
 )
 
 # Register socket events
-from routes.chat import init_socketio
-init_socketio(socketio)
+try:
+    from routes.chat import init_socketio
+    init_socketio(socketio)
+    print("✅ SocketIO initialized")
+except Exception as e:
+    print(f"❌ SocketIO error: {e}")
 
 
 if __name__ == "__main__":
