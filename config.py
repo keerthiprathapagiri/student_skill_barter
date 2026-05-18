@@ -10,8 +10,15 @@ database_url = os.environ.get("DATABASE_URL")
 # Fix old postgres:// format
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace(
-        "postgres://",
+    "postgres://",
+    "postgresql+psycopg://",
+    1
+)
+
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace(
         "postgresql://",
+        "postgresql+psycopg://",
         1
     )
 
