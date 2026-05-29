@@ -307,7 +307,7 @@ h1,h2,h3,h4,h5,h6 {
     0%,100% { transform: translateY(0) scale(1); }
     50% { transform: translateY(-20px) scale(1.04); }
 }
-.hero-content {
+.hero-image {
     position: relative; 
     z-index: 1;
     max-width: 700px;
