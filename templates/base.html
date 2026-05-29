@@ -14,10 +14,9 @@
 
 <!-- ══════════ NAVBAR ══════════ -->
 <nav class="navbar">
-    <a href="{{ url_for('main.index') }}" class="nav-brand">
-        <span class="brand-icon">⚡</span>
-        <span>SkillBarter</span>
-    </a>
+    <a class="navbar-brand" href="/">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+</a>
     <div class="nav-links">
         <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">Home</a>
         <a href="{{ url_for('main.contact') }}" class="nav-link {% if request.endpoint == 'main.contact' %}active{% endif %}">Contact</a>
