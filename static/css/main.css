@@ -308,9 +308,11 @@ h1,h2,h3,h4,h5,h6 {
     50% { transform: translateY(-20px) scale(1.04); }
 }
 .hero-content {
-    position: relative;
-    z-index: 1;
-    max-width: 700px;
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(360px, 1.2fr);
+    gap: 2.5rem;
+    align-items: center;
+    text-align: left;
 }
 .hero-badge {
     display: inline-block;
