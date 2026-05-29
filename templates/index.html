@@ -6,62 +6,58 @@
 
 <!-- ══════════ HERO ══════════ -->
 <section class="hero">
+
     <div class="hero-bg">
         <div class="hero-orb hero-orb-1"></div>
         <div class="hero-orb hero-orb-2"></div>
     </div>
 
-    <div class="hero-content">
+    <div class="hero-layout">
 
         <!-- LEFT SIDE -->
-        <div class="hero-text">
+        <div class="hero-content">
+
+            <div class="hero-badge">
+                Skill Exchange Platform
+            </div>
+
             <h1 class="hero-title">
-                Trade Skills.<br>
+                Learn. Teach.
                 <span class="gradient-text">Grow Together.</span>
             </h1>
 
             <p class="hero-subtitle">
-                Connect with students who have what you need,<br>
-                offer what you know, and learn without spending a rupee.
+                Connect with students, exchange skills,
+                and grow together through collaborative learning.
             </p>
 
-            {% if not session.user_id %}
             <div class="hero-cta">
-                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get Started Free</a>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg">Sign In</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                    Get Started
+                </a>
+
+                <a href="#matches" class="btn btn-outline btn-lg">
+                    Explore Skills
+                </a>
             </div>
-            {% else %}
-            <div class="hero-cta">
-                <a href="{{ url_for('main.profile') }}" class="btn btn-primary btn-lg">My Profile</a>
-                <a href="{{ url_for('chat.chat_list') }}" class="btn btn-outline btn-lg">Messages</a>
-            </div>
-            {% endif %}
+
         </div>
 
         <!-- RIGHT SIDE -->
-        <div class="hero-image">
+        <div class="hero-carousel">
+
             <div class="carousel-track">
-                <img src="{{ url_for('static', filename='images/image1.png') }}" alt="Slide 1">
-                <img src="{{ url_for('static', filename='images/image2.png') }}" alt="Slide 2">
-                <img src="{{ url_for('static', filename='images/image3.png') }}" alt="Slide 3">
+
+                <img src="{{ url_for('static', filename='images/slide1.jpg') }}" alt="">
+                <img src="{{ url_for('static', filename='images/slide2.jpg') }}" alt="">
+                <img src="{{ url_for('static', filename='images/slide3.jpg') }}" alt="">
+
             </div>
+
         </div>
 
     </div>
 
-    <div class="hero-stats">
-        <div class="stat">
-            <span class="stat-num">0₹</span>
-            <span class="stat-label">Cost to Join</span>
-        </div>
-
-        <div class="stat-divider"></div>
-
-        <div class="stat">
-            <span class="stat-num">Real-time</span>
-            <span class="stat-label">Chat &amp; Connect</span>
-        </div>
-    </div>
 </section>
 
 <!-- ══════════ SKILL SEARCH + MATCHER ══════════ -->
