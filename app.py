@@ -4,12 +4,16 @@ from flask import Flask
 from flask_socketio import SocketIO
 from config import ActiveConfig
 from database.db import db
+import os
 
 
 def create_app():
     """Create and configure Flask app."""
 
-    app = Flask(__name__)
+    # Get the absolute path to the static folder
+    static_folder = os.path.join(os.path.dirname(__file__), 'static')
+    
+    app = Flask(__name__, static_folder=static_folder, static_url_path='/static')
     app.config.from_object(ActiveConfig)
 
     # Initialize database
